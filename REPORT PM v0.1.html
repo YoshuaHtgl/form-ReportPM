@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>📋 Preventive Maintenance Summary</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    background: linear-gradient(180deg, #f5f8fc, #e2e8f0);
+    padding: 25px;
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #1a202c;
+    font-weight: 600;
+  }
+
+  .table-container {
+    max-height: 80vh;
+    overflow: auto;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1100px;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.9rem;
+    vertical-align: middle;
+  }
+
+  th {
+    background: linear-gradient(90deg, #2563eb, #1e40af);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  th:first-child, td:first-child {
+    position: sticky;
+    left: 0;
+    background: #16a34a;
+    color: white;
+    z-index: 3;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) { background: #f9fafb; }
+  tr:hover { background: #e0f2fe; transition: 0.2s; }
+
+  /* === STATUS DOT === */
+  .status-dot {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .outstanding { background-color: #dc2626; }
+  .selesai { background-color: #16a34a; }
+  .ok { background-color: #2563eb; }
+
+  .editable { cursor:pointer; transition:background .2s; }
+  .editable:hover { background:#fff5f5; }
+
+  /* preview button */
+  .preview-btn {
+    background:#f1f5f9; border:1px solid #cbd5e1;
+    border-radius:6px; padding:2px 6px;
+    font-size:0.85rem; cursor:pointer;
+  }
+  .preview-btn:hover { background:#dbeafe; }
+
+  /* ⭐ NEW: OUTSTANDING BUTTON */
+  .out-btn {
+    background:white;
+    border:1px solid #dc2626;
+    color:#dc2626;
+    padding:1px 5px;
+    border-radius:5px;
+    font-size:12px;
+    margin-left:6px;
+    cursor:pointer;
+  }
+  .out-btn:hover {
+    background:#dc2626;
+    color:white;
+  }
+
+  #popup {
+    display:none; position:absolute; background:white;
+    border:1px solid #cbd5e1; border-radius:10px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.15);
+    padding:8px; z-index:10;
+  }
+
+  #overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.4); z-index:99;
+  }
+
+  /* upload popup & preview popup unchanged */
+  #uploadPopup, #previewModal, #outstandingPopup {
+    display:none; position:fixed;
+    top:50%; left:50%; transform:translate(-50%,-50%);
+    background:white; padding:20px;
+    border-radius:12px; width:400px;
+    max-width:90%; z-index:100;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+    animation:fadeIn .25s ease;
+  }
+
+  #outstandingPopup h3,
+  #uploadPopup h4,
+  #previewModal h3 { text-align:center; margin-top:0; }
+
+  .preview-img { width:100%; display:none; margin-top:8px; border-radius:6px; }
+
+  #loading {
+    display:none; position:fixed; inset:0;
+    background:rgba(255,255,255,0.7);
+    justify-content:center; align-items:center;
+    font-size:1.2rem; font-weight:600; z-index:999;
+  }
+
+  /* layout for outstanding popup row */
+  .out-row {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-top:6px;
+    margin-bottom:6px;
+  }
+  .out-row b { min-width:60px; }
+
+  @keyframes fadeIn {
+    from {opacity:0; transform:translate(-50%,-48%);}
+    to   {opacity:1; transform:translate(-50%,-50%);}
+  }
+</style>
+</head>
+<body>
+
+<h2>📋 Preventive Maintenance Summary</h2>
+<div id="loading">⏳ Memuat data...</div>
+
+<div class="table-container">
+  <table id="dataTable">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div id="popup">
+  <button data-value="SELESAI">🟢 Tandai Selesai</button>
+</div>
+
+<div id="overlay"></div>
+
+<!-- Upload Before After -->
+<div id="uploadPopup">
+  <h4>📸 Upload Foto Before / After</h4>
+  <input type="file" id="beforeInput"><img id="beforePreview" class="preview-img">
+  <input type="file" id="afterInput"><img id="afterPreview" class="preview-img">
+  <textarea id="desc" rows="3" placeholder="Deskripsi..."></textarea>
+  <div style="display:flex;gap:10px;">
+    <button id="submitUpload" style="flex:1;background:#2563eb;color:white;border:none;border-radius:6px;padding:8px;">Kirim</button>
+    <button onclick="closeUpload()" style="flex:1;background:#e5e7eb;border:none;border-radius:6px;">Tutup</button>
+  </div>
+</div>
+
+<!-- Preview Before After -->
+<div id="previewModal">
+  <div class="content"></div>
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="closePreview()" style="padding:8px 16px;background:#e5e7eb;border:none;border-radius:6px;">Tutup</button>
+  </div>
+</div>
+
+<!-- ⭐ UPDATED POPUP OUTSTANDING -->
+<div id="outstandingPopup" style="max-width:480px;">
+  <h3 style="margin:0 0 15px 0; text-align:center; font-size:20px;">
+    📌 Detail Outstanding
+  </h3>
+
+  <div style="display:flex; align-items:center; margin-bottom:12px;">
+    <label style="width:90px; font-weight:600;">Status</label>
+    <span id="outStatus" style="margin-right:10px;">-</span>
+    <select id="outStatusSelect"
+            style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
+      <option value="">None</option>
+      <option value="Order Barang">Order Barang</option>
+      <option value="APM">APM</option>
+    </select>
+  </div>
+
+  <div style="display:flex; align-items:center; margin-bottom:12px;">
+    <label style="width:90px; font-weight:600;">Notif</label>
+    <input id="outNotifInput" type="text" placeholder="Isi notif..."
+           style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
+  </div>
+
+  <div style="display:flex; margin-bottom:12px;">
+    <label style="width:90px; font-weight:600;">Deskripsi</label>
+    <textarea id="outDescInput" rows="3" placeholder="Isi deskripsi..."
+              style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;"></textarea>
+  </div>
+
+  <div style="text-align:center; margin-top:20px;">
+    <button onclick="saveOutstanding()"
+      style="padding:8px 16px; background:#2563eb; color:white;
+             border:none; border-radius:6px; margin-right:10px; width:100px;">
+      Simpan
+    </button>
+
+    <button onclick="closeOutstanding()"
+      style="padding:8px 16px; background:#e5e7eb;
+             border:none; border-radius:6px; width:100px;">
+      Tutup
+    </button>
+  </div>
+</div>
+
+<script>
+const apiURL="https://script.google.com/macros/s/AKfycbw1rtfjE29nrJzUfZdukkuG-gusawFYzErkzpm7GiFsehEq6ZEsA9wVFxLSYzY0_xbi3A/exec";
+
+let allData=[],currentCell=null,currentRow=null,currentCol=null;
+
+function showLoading(x="⏳ Memuat..."){const e=document.getElementById("loading");e.textContent=x;e.style.display="flex";}
+function hideLoading(){document.getElementById("loading").style.display="none";}
+
+async function loadData(){
+  showLoading();
+  const res=await fetch(`${apiURL}?action=get`);
+  allData=await res.json();
+  renderTable(allData);
+  hideLoading();
+}
+
+function renderTable(data){
+  if(!data || !data.length) {
+    document.querySelector("#dataTable thead").innerHTML = "";
+    document.querySelector("#dataTable tbody").innerHTML = "<tr><td colspan='20' style='text-align:center;padding:20px;'>No data</td></tr>";
+    return;
+  }
+  const headers=Object.keys(data[0]).slice(1,25);
+  const thead=document.querySelector("#dataTable thead");
+  const tbody=document.querySelector("#dataTable tbody");
+
+  thead.innerHTML="<tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr>";
+
+  tbody.innerHTML=data.map((row,i)=>{
+    const tds=headers.map(h=>{
+      let val=(row[h]||"").toString();
+
+      if(val.match(/^\d{4}-\d{2}-\d{2}T/)){
+        const d=new Date(val);
+        const dd=String(d.getDate()).padStart(2,"0");
+        const mm=String(d.getMonth()+1).padStart(2,"0");
+        val=`${dd}/${mm}/${d.getFullYear()}`;
+      }
+
+      const upper=val.toUpperCase();
+      let display="",editable=false;
+
+      if(upper.includes("OUTSTANDING")){
+        display=`<span class='status-dot outstanding'></span>`;
+        editable=true;
+      }
+      else if(upper.includes("SELESAI")){
+        display=`<span class='status-dot selesai'></span>`;
+      }
+      else if(upper.includes("OK NO ISSUE")){
+        display=`<span class='status-dot ok'></span>`;
+      }
+      else display=val;
+
+      /* ⭐ OUTSTANDING POPUP BUTTON */
+      if(upper.includes("OUTSTANDING")){
+        display+=` <button class="out-btn" onclick="openOutstanding(${i},'${h}')">❗O</button>`;
+      }
+
+      /* existing preview button logic unchanged */
+      const b=row[`Before_${h}`],a=row[`After_${h}`],d=row[`Desk_${h}`];
+      if(upper.includes("SELESAI") && b && a && d){
+        display+=` <button class="preview-btn" onclick="showPreview(${i},'${h}')">📷 Preview</button>`;
+      }
+
+      return `<td ${editable?`class='editable' onclick="showPopup(event,${i+2},'${h}',this)"`:''}>${display}</td>`;
+    }).join("");
+
+    return `<tr>${tds}</tr>`;
+  }).join("");
+}
+
+/* ⭐ NEW: SHOW OUTSTANDING POPUP (Dropdown ada di samping status) */
+function openOutstanding(idx,col){
+  const r = allData[idx];
+
+  document.getElementById("outStatus").textContent = r[`Status_${col}`] || "-";
+
+  // load existing notif + deskripsi (jika ada)
+  document.getElementById("outNotifInput").value = r[`Progress_${col}`] || "";
+  document.getElementById("outDescInput").value  = r[`Notif_${col}`] || "";
+
+  // simpan referensi
+  const sel = document.getElementById("outStatusSelect");
+  sel.value = "";
+  sel.dataset.col = col;
+  sel.dataset.idx = idx;
+
+  document.getElementById("overlay").style.display="block";
+  document.getElementById("outstandingPopup").style.display="block";
+}
+
+	async function saveOutstanding(){
+	  const sel = document.getElementById("outStatusSelect");
+	  const col = sel.dataset.col;
+	  const idx = parseInt(sel.dataset.idx);
+	  const rowNumber = idx + 2;
+
+	  const statusVal = sel.value;
+	  const notifVal = document.getElementById("outNotifInput").value.trim();
+	  const descVal  = document.getElementById("outDescInput").value.trim();
+
+	  showLoading("Saving...");
+
+	  if(statusVal) await updateStatus(rowNumber, `Status_${col}`, statusVal);
+	  await updateStatus(rowNumber, `Progress_${col}`, notifVal);
+	  await updateStatus(rowNumber, `Notif_${col}`, descVal);
+
+	  hideLoading();
+	  closeOutstanding();
+	  loadData();
+	}
+
+function closeOutstanding(){
+  document.getElementById("overlay").style.display="none";
+  document.getElementById("outstandingPopup").style.display="none";
+}
+
+/* EXISTING POPUPS: upload, preview, update — tidak diubah */
+function showPopup(e,row,col,el){
+  const p=document.getElementById("popup");
+  p.style.display="block";
+  p.style.top=e.pageY+"px";
+  p.style.left=e.pageX+"px";
+  currentRow=row;currentCol=col;currentCell=el;
+}
+
+document.addEventListener("click",e=>{
+  const p=document.getElementById("popup");
+  if(!p.contains(e.target) && !e.target.classList.contains("editable")) p.style.display="none";
+});
+
+document.querySelector("#popup button").addEventListener("click",()=>{
+  document.getElementById("popup").style.display="none";
+  openUpload(currentRow);
+});
+
+/* upload popup unchanged */
+let uploadRow=null;
+function openUpload(r){uploadRow=r;document.getElementById("overlay").style.display="block";document.getElementById("uploadPopup").style.display="block";}
+function closeUpload(){document.getElementById("overlay").style.display="none";document.getElementById("uploadPopup").style.display="none";}
+document.getElementById("beforeInput").addEventListener("change",e=>previewImg(e,"beforePreview"));
+document.getElementById("afterInput").addEventListener("change",e=>previewImg(e,"afterPreview"));
+function previewImg(e,id){const f=e.target.files[0];const img=document.getElementById(id);if(f){img.src=URL.createObjectURL(f);img.style.display="block";}}
+
+async function uploadFileToDrive(file,name){
+  const base64=await new Promise(r=>{let fr=new FileReader();fr.onload=e=>r(e.target.result.split(",")[1]);fr.readAsDataURL(file);});
+  const res=await fetch(apiURL,{method:"POST",body:new URLSearchParams({action:"uploadImage",file:base64,mimeType:file.type,filename:name})});
+  return res.text();
+}
+
+document.getElementById("submitUpload").addEventListener("click",async()=>{
+  const desc=document.getElementById("desc").value.trim();
+  const b=document.getElementById("beforeInput").files[0];
+  const a=document.getElementById("afterInput").files[0];
+  if(!b||!a)return alert("⚠️ Upload foto sebelum & sesudah!");
+
+  showLoading("Uploading...");
+
+  const row=allData[uploadRow-2];
+  const plant=(row.PLANT||"PLANT").replace(/\s+/g,"_");
+  const cat=currentCol.replace(/\s+/g,"_");
+  const d=new Date().toISOString().split("T")[0];
+  const prefix=`${d}_${plant}_${cat}`;
+
+  const bLink=await uploadFileToDrive(b,prefix+"_Before");
+  const aLink=await uploadFileToDrive(a,prefix+"_After");
+
+  await updateStatus(uploadRow,`Before_${currentCol}`,bLink);
+  await updateStatus(uploadRow,`After_${currentCol}`,aLink);
+  await updateStatus(uploadRow,`Desk_${currentCol}`,desc);
+  await updateStatus(uploadRow,currentCol,"SELESAI");
+
+  closeUpload(); hideLoading(); loadData();
+});
+
+async function updateStatus(row,col,val){
+  const r=await fetch(apiURL,{method:"POST",body:new URLSearchParams({action:"update",row,col,value:val})});
+  return r.text();
+}
+
+/* preview modal unchanged */
+function showPreview(i,h){
+  const r=allData[i];
+  const b=r[`Before_${h}`],a=r[`After_${h}`],d=r[`Desk_${h}`];
+  const modal=document.getElementById("previewModal");
+  modal.querySelector(".content").innerHTML=`
+    <h3>📷 ${h}</h3>
+    <p><b>Deskripsi:</b> ${d}</p>
+    <div style="display:flex;gap:15px;justify-content:center;">
+      <div><b>Before:</b><br><a href="${b}" target="_blank"><img src="${b}" width="150"></a></div>
+      <div><b>After:</b><br><a href="${a}" target="_blank"><img src="${a}" width="150"></a></div>
+    </div>`;
+  document.getElementById("overlay").style.display="block";
+  modal.style.display="block";
+}
+
+function closePreview(){
+  document.getElementById("overlay").style.display="none";
+  document.getElementById("previewModal").style.display="none";
+}
+
+document.getElementById("overlay").addEventListener("click",()=>{
+  closeUpload(); closePreview(); closeOutstanding();
+});
+
+loadData();
+</script>
+</body>
+</html>
