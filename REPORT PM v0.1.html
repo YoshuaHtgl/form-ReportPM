@@ -170,14 +170,6 @@
   }
 </style>
 </head>
-Saat simpan, dikirim kembali ke kolom yang benar.
-
-Perbaikan bug kecil: sebelumnya Deskripsi & Notif ketuker.
-
-✔️ Berikut versi final mulai dari <body> sampai selesai
-
-(Tidak mengubah <head> agar kamu bisa paste langsung)
-
 <body>
 
 <h2>📋 Preventive Maintenance Summary</h2>
@@ -288,7 +280,7 @@ function renderTable(data){
     return;
   }
 
-  const headers=Object.keys(data[0]).slice(1,25);
+  const headers=Object.keys(data[0]).slice(1,26);
   const thead=document.querySelector("#dataTable thead");
   const tbody=document.querySelector("#dataTable tbody");
 
@@ -415,6 +407,37 @@ async function uploadFileToDrive(file,name){
   return res.text();
 }
 
+async function updatePercentage(rowIndex) {
+    const row = allData[rowIndex - 2];
+
+    const statusCols = [
+        "CLEANINGPANEL_STATUS",
+        "CLEANINGFAN_STATUS",
+        "CLEANINGFILTER_STATUS",
+        "TIGHTENING_STATUS",
+        "PENGGANTIAN_LAMPU_STATUS",
+        "PENGGANTIAN_HANDLE_STATUS",
+        "PERBAIKAN_WIRING_STATUS",
+        "CEK_ALARM_PLC_STATUS",
+        "CEK_TEGANGAN_PSU_STATUS"
+    ];
+
+    let selesai = 0;
+
+    statusCols.forEach(col => {
+        const v = (row[col] || "").toUpperCase();
+        if (v.includes("SELESAI") || v.includes("OK NO ISSUE")) {
+            selesai++;
+        }
+    });
+
+    const percent = Math.round((selesai / statusCols.length) * 100);
+    await updateStatus(rowIndex, "PERSENTASE", percent + "%");
+
+    return percent;
+}
+
+
 document.getElementById("submitUpload").addEventListener("click",async()=>{
   const desc=document.getElementById("desc").value.trim();
   const b=document.getElementById("beforeInput").files[0];
@@ -436,8 +459,16 @@ document.getElementById("submitUpload").addEventListener("click",async()=>{
   await updateStatus(uploadRow,`After_${currentCol}`,aLink);
   await updateStatus(uploadRow,`Desk_${currentCol}`,desc);
   await updateStatus(uploadRow,currentCol,"SELESAI");
+	// ⬇ Muat data TERBARU dulu
+	await loadData();
 
-  closeUpload(); hideLoading(); loadData();
+	// ⬇ Lalu HITUNG persentase (menggunakan data terbaru)
+	await updatePercentage(uploadRow);
+
+	// Tutup popup + refresh tampilan tabel
+	closeUpload();
+	hideLoading();
+	await loadData();
 });
 
 async function updateStatus(row,col,val){
