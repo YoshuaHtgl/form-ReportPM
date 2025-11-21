@@ -258,7 +258,7 @@
 
 
 <script>
-const apiURL="https://script.google.com/macros/s/AKfycbw1rtfjE29nrJzUfZdukkuG-gusawFYzErkzpm7GiFsehEq6ZEsA9wVFxLSYzY0_xbi3A/exec";
+const apiURL="https://script.google.com/macros/s/AKfycbx1MPb9M2VMDqH988FShrBQg4wtrDmnz5hx51YnsRv3BUF9nAj2ufJ7jXN6kub209En0w/exec";
 
 let allData=[],currentCell=null,currentRow=null,currentCol=null;
 
@@ -290,6 +290,13 @@ function renderTable(data){
     const tds=headers.map(h=>{
       let val=(row[h]||"").toString();
       const upper=val.toUpperCase();
+	  
+	  
+	  
+	  
+	  
+	  
+	  
       let display="",editable=false;
 
       if(upper.includes("OUTSTANDING")){
@@ -407,36 +414,6 @@ async function uploadFileToDrive(file,name){
   return res.text();
 }
 
-async function updatePercentage(rowIndex) {
-    const row = allData[rowIndex - 2];
-
-    const statusCols = [
-        "CLEANINGPANEL_STATUS",
-        "CLEANINGFAN_STATUS",
-        "CLEANINGFILTER_STATUS",
-        "TIGHTENING_STATUS",
-        "PENGGANTIAN_LAMPU_STATUS",
-        "PENGGANTIAN_HANDLE_STATUS",
-        "PERBAIKAN_WIRING_STATUS",
-        "CEK_ALARM_PLC_STATUS",
-        "CEK_TEGANGAN_PSU_STATUS"
-    ];
-
-    let selesai = 0;
-
-    statusCols.forEach(col => {
-        const v = (row[col] || "").toUpperCase();
-        if (v.includes("SELESAI") || v.includes("OK NO ISSUE")) {
-            selesai++;
-        }
-    });
-
-    const percent = Math.round((selesai / statusCols.length) * 100);
-    await updateStatus(rowIndex, "PERSENTASE", percent + "%");
-
-    return percent;
-}
-
 
 document.getElementById("submitUpload").addEventListener("click",async()=>{
   const desc=document.getElementById("desc").value.trim();
@@ -461,9 +438,6 @@ document.getElementById("submitUpload").addEventListener("click",async()=>{
   await updateStatus(uploadRow,currentCol,"SELESAI");
 	// ⬇ Muat data TERBARU dulu
 	await loadData();
-
-	// ⬇ Lalu HITUNG persentase (menggunakan data terbaru)
-	await updatePercentage(uploadRow);
 
 	// Tutup popup + refresh tampilan tabel
 	closeUpload();
