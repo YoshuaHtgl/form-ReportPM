@@ -286,42 +286,56 @@ function renderTable(data){
 
   thead.innerHTML="<tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr>";
 
-  tbody.innerHTML=data.map((row,i)=>{
-    const tds=headers.map(h=>{
-      let val=(row[h]||"").toString();
-      const upper=val.toUpperCase();
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-      let display="",editable=false;
+  tbody.innerHTML = data.map((row,i)=>{
+  const tds = headers.map(h=>{
+    let val = (row[h] || "").toString();
+    const upper = val.toUpperCase();
 
+    const statusColumns = [
+      "CLEANING PANEL","CLEANING FAN","CLEANING FILTER",
+      "TIGHTENING","GANTI LAMPU","GANTI HANDLE",
+      "PERBAIKAN WIRING IO/DUCK","CEK ALARM PLC","CEK TEGANGAN AC DC"
+    ];
+
+    let display = "";
+
+    // jika bukan kolom status → tampilkan apa adanya
+    if(!statusColumns.includes(h)){
+      display = val;
+    } else {
+      // kolom status pakai dot
       if(upper.includes("OUTSTANDING")){
-        display=`<span class='status-dot outstanding'></span>
-                 <button class="out-btn" onclick="currentCol='${h}'; openOutstanding(${i},'${h}')">❗</button>`;
-        editable=true;
+        display = `
+          <span class="status-dot outstanding"></span>
+          <button class="out-btn"
+            onclick="currentCol='${h}'; openOutstanding(${i},'${h}')">❗</button>
+        `;
       }
       else if(upper.includes("SELESAI")){
-        display=`<span class='status-dot selesai'></span>`;
+        display = `<span class="status-dot selesai"></span>`;
       }
       else if(upper.includes("OK NO ISSUE")){
-        display=`<span class='status-dot ok'></span>`;
+        display = `<span class="status-dot ok"></span>`;
       }
-      else display=val;
-
-      const b=row[`Before_${h}`],a=row[`After_${h}`],d=row[`Desk_${h}`];
-      if(upper.includes("SELESAI") && b && a && d){
-        display+=` <button class="preview-btn" onclick="showPreview(${i},'${h}')">📷</button>`;
+      else {
+        display = val;
       }
+    }
 
-      return `<td>${display}</td>`;
-    }).join("");
+    // tombol preview jika selesai
+    const b = row[`Before_${h}`];
+    const a = row[`After_${h}`];
+    const d = row[`Desk_${h}`];
 
-    return `<tr>${tds}</tr>`;
+    if(upper.includes("SELESAI") && b && a && d){
+      display += ` <button class="preview-btn" onclick="showPreview(${i},'${h}')">📷</button>`;
+    }
+
+    return `<td>${display}</td>`;
   }).join("");
+
+  return `<tr>${tds}</tr>`;
+}).join("");
 }
 
 /* ⭐⭐⭐ FINAL: OUTSTANDING POPUP LOGIC */
