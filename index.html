@@ -258,7 +258,7 @@
 
 
 <script>
-const apiURL="https://script.google.com/macros/s/AKfycbx1MPb9M2VMDqH988FShrBQg4wtrDmnz5hx51YnsRv3BUF9nAj2ufJ7jXN6kub209En0w/exec";
+const apiURL="https://script.google.com/macros/s/AKfycbyns4Rtfa7yEuocCA_HzYQBavzUgbhy8hPU1YqzReNCrqIYSbyW35GwQxvhzNLIbTvoPg/exec";
 
 let allData=[],currentCell=null,currentRow=null,currentCol=null;
 
@@ -356,6 +356,7 @@ async function saveOutstanding(){
   const notifCol  = popup.dataset.notifCol;
   const idx       = parseInt(popup.dataset.idx);
 
+
   const rowNumber = idx + 2;
 
   const statusVal = document.getElementById("outStatusSelect").value;
@@ -364,13 +365,16 @@ async function saveOutstanding(){
 
   showLoading("Saving...");
 
-  await updateStatus(rowNumber, statusCol, statusVal);
-  await updateStatus(rowNumber, descCol, descVal);
-  await updateStatus(rowNumber, notifCol, notifVal);
+	await updateStatus(rowNumber, statusCol, statusVal);
+	await updateStatus(rowNumber, descCol, descVal);
+	await updateStatus(rowNumber, notifCol, notifVal);
 
-  hideLoading();
-  closeOutstanding();
-  loadData();
+	await loadData();        // refresh allData
+	await hitungPersentase(idx);  
+
+	hideLoading();
+	closeOutstanding();
+	await loadData(); 
 }
 
 function finishOutstanding() {
@@ -435,7 +439,11 @@ document.getElementById("submitUpload").addEventListener("click",async()=>{
   await updateStatus(uploadRow,`Before_${currentCol}`,bLink);
   await updateStatus(uploadRow,`After_${currentCol}`,aLink);
   await updateStatus(uploadRow,`Desk_${currentCol}`,desc);
-  await updateStatus(uploadRow,currentCol,"SELESAI");
+	await updateStatus(uploadRow, currentCol, "SELESAI");
+
+	await loadData(); // WAJIB → refresh allData sebelum hitung
+
+	await hitungPersentase(uploadRow - 2);
 	// ⬇ Muat data TERBARU dulu
 	await loadData();
 
@@ -448,6 +456,38 @@ document.getElementById("submitUpload").addEventListener("click",async()=>{
 async function updateStatus(row,col,val){
   const r=await fetch(apiURL,{method:"POST",body:new URLSearchParams({action:"update",row,col,value:val})});
   return r.text();
+}
+
+/* =====================================================
+   HITUNG PERSENTASE OUTSTANDING (kolom O–W = 9 kolom)
+   Hasil ditulis ke kolom X (PERSENTASE)
+   ===================================================== */
+async function hitungPersentase(rowIndex) {
+  const row = allData[rowIndex]; // data satu baris
+
+  // Kolom status O–W = index 14–22
+  const statusKeys = [
+    "CLEANING PANEL", "CLEANING FAN", "CLEANING FILTER",
+    "TIGHTENING", "GANTI LAMPU", "GANTI HANDLE",
+    "PERBAIKAN WIRING IO/DUCK", "CEK ALARM PLC", "CEK TEGANGAN AC DC"
+  ];
+
+  let total = statusKeys.length; // selalu 9 kolom
+  let outstanding = 0;
+
+  statusKeys.forEach(k => {
+    let val = (row[k] || "").toString().toUpperCase();
+    if (val.includes("OUTSTANDING")) outstanding++;
+  });
+
+  // hitung persen
+  let selesai = total - outstanding;
+  let persen = Math.round((selesai / total) * 100);
+
+  // update ke kolom PERSENTASE (header = "PERSENTASE")
+  await updateStatus(rowIndex + 2, "PERSENTASE", persen + "%");
+
+  console.log("Persentase updated:", persen + "%");
 }
 
 function showPreview(i,h){
