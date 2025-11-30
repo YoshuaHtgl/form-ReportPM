@@ -3,6 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <title>📋 Preventive Maintenance Summary</title>
+<div style="text-align:center; margin-bottom:20px;">
+  <button onclick="window.location.href='https://yoshuahtgl.github.io/dasboard_PM/'"
+    style="
+      background:#2563eb;
+      color:white;
+      border:none;
+      padding:10px 20px;
+      border-radius:8px;
+      font-size:16px;
+      cursor:pointer;
+      transition:0.2s;
+      box-shadow:0 4px 10px rgba(37,99,235,0.3);
+    "
+    onmouseover="this.style.transform='scale(1.05)'"
+    onmouseout="this.style.transform='scale(1)'">
+    🚀 Buka Dashboard PM
+  </button>
+</div>
+
 <style>
   body {
     font-family: 'Segoe UI', Roboto, Arial, sans-serif;
@@ -400,7 +419,7 @@ function renderTable(data){
     const statusColumns = [
       "CLEANING PANEL","CLEANING FAN","CLEANING FILTER",
       "TIGHTENING","GANTI LAMPU","GANTI HANDLE","GANTI FAN",
-      "PERBAIKAN WIRING IO/DUCK","CEK ALARM PLC","CEK TEGANGAN AC DC"
+      "PERBAIKAN WIRING","CEK ALARM PLC","CEK TEGANGAN AC DC"
     ];
 
     let display = "";
@@ -637,7 +656,7 @@ async function hitungPersentase(rowIndex) {
   const statusKeys = [
     "CLEANING PANEL", "CLEANING FAN", "CLEANING FILTER",
     "TIGHTENING", "GANTI LAMPU", "GANTI HANDLE", "GANTI FAN",
-    "PERBAIKAN WIRING IO/DUCK", "CEK ALARM PLC", "CEK TEGANGAN AC DC"
+    "PERBAIKAN WIRING", "CEK ALARM PLC", "CEK TEGANGAN AC DC"
   ];
 
   let total = statusKeys.length; // selalu 9 kolom
