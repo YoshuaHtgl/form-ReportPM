@@ -1,732 +1,225 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>📋 Preventive Maintenance Summary</title>
+  <meta charset="UTF-8">
+  <title>Dashboard Monitoring PM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<style>
-  body {
-    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-    background: linear-gradient(180deg, #f5f8fc, #e2e8f0);
-    padding: 25px;
-  }
-  h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #1a202c;
-    font-weight: 600;
-  }
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI;
+      background: #eef2ff;
+      color: #0f172a;
+    }
+    .wrapper {
+      max-width: 1100px;
+      margin: auto;
+      padding: 25px;
+    }
+    h1 { font-size: 1.7rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 18px; }
 
-  .table-container {
-    max-height: 80vh;
-    overflow: auto;
-    border-radius: 12px;
-    background: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .refresh-btn {
+      border: none; padding: 9px 18px;
+      background: #2563eb; color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display:flex; gap:6px; align-items:center;
+      box-shadow: 0 3px 8px rgba(37,99,235,0.3);
+    }
 
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 1100px;
-  }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 10px;
+    }
 
-  th, td {
-    border: 1px solid #e2e8f0;
-    padding: 10px 12px;
-    text-align: left;
-    font-size: 0.9rem;
-    vertical-align: middle;
-  }
+    .section-title {
+      font-size: 1rem;
+      font-weight: bold;
+      margin: 22px 0 6px;
+      color: #334155;
+      border-left: 4px solid #2563eb;
+      padding-left: 8px;
+    }
 
-  th {
-    background: linear-gradient(90deg, #2563eb, #1e40af);
-    color: white;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
+    .card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      transition: transform .15s;
+    }
+    .card:hover { transform: scale(1.05); }
+    .card-title { font-size: 0.9rem; color: #6b7280; }
+    .card-value { font-size: 2.2rem; font-weight: bold; margin-top: 4px; }
 
-  th:first-child, td:first-child {
-    position: sticky;
-    left: 0;
-    background: #16a34a;
-    color: white;
-    z-index: 3;
-    font-weight: 600;
-  }
-  
-  
-
-  tr:nth-child(even) { background: #f9fafb; }
-  tr:hover { background: #e0f2fe; transition: 0.2s; }
-
-  /* === STATUS DOT === */
-  .status-dot {
-    display: inline-block;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
-  .outstanding { background-color: #dc2626; }
-  .selesai { background-color: #16a34a; }
-  .ok { background-color: #2563eb; }
-
-  .editable { cursor:pointer; transition:background .2s; }
-  .editable:hover { background:#fff5f5; }
-
-  /* preview button */
-	.preview-btn {
-    background:#f1f5f9;
-    border:1px solid #cbd5e1;
-    color:#334155;
-    border-radius:4px;
-
-    padding:0px 4px;        /* lebih kecil */
-    font-size:9px;          /* kecil */
-    line-height:10px;
-
-    display:inline-flex;    /* supaya center */
-    align-items:center;
-    justify-content:center;
-
-    height:14px;            /* tinggi tetap rapi */
-    cursor:pointer;
-}
-
-
-  .preview-btn:hover { background:#dbeafe; }
-
-  /* ⭐ NEW: OUTSTANDING BUTTON */
-.out-btn {
-    background:white;
-    border:1px solid #dc2626;
-    color:#dc2626;
-    padding:0px 1px;        /* super kecil */
-    border-radius:2px;
-    font-size:7px;          /* sangat kecil */
-    line-height:7px;
-    margin-left:2px;
-    cursor:pointer;
-
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-
-    height:10px;            /* lebih pendek */
-    min-width:10px;         /* bentuk hampir kotak */
-}
-  .out-btn:hover {
-    background:#dc2626;
-    color:white;
-  }
-
-  #popup {
-    display:none; position:absolute; background:white;
-    border:1px solid #cbd5e1; border-radius:10px;
-    box-shadow:0 6px 20px rgba(0,0,0,0.15);
-    padding:8px; z-index:10;
-  }
-
-  #overlay {
-    display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,0.4); z-index:99;
-  }
-
-  /* upload popup & preview popup unchanged */
-  #uploadPopup, #previewModal, #outstandingPopup {
-    display:none; position:fixed;
-    top:50%; left:50%; transform:translate(-50%,-50%);
-    background:white; padding:20px;
-    border-radius:12px; width:400px;
-    max-width:90%; z-index:100;
-    box-shadow:0 8px 30px rgba(0,0,0,0.25);
-    animation:fadeIn .25s ease;
-  }
-
-  #outstandingPopup h3,
-  #uploadPopup h4,
-  #previewModal h3 { text-align:center; margin-top:0; }
-
-  .preview-img { width:100%; display:none; margin-top:8px; border-radius:6px; }
-
-  #loading {
-    display:none; position:fixed; inset:0;
-    background:rgba(255,255,255,0.7);
-    justify-content:center; align-items:center;
-    font-size:1.2rem; font-weight:600; z-index:999;
-  }
-
-  /* layout for outstanding popup row */
-  .out-row {
-    display:flex;
-    gap:8px;
-    align-items:center;
-    margin-top:6px;
-    margin-bottom:6px;
-  }
-  .out-row b { min-width:60px; }
-
-  @keyframes fadeIn {
-    from {opacity:0; transform:translate(-50%,-48%);}
-    to   {opacity:1; transform:translate(-50%,-50%);}
-  }
-  
-	  th:first-child {
-	  position: sticky;
-	  left: 0;
-	  background: #16a34a; 
+    .error {
+      display: none;
+      padding: 12px;
+      background: #fee2e2;
+      color: #b91c1c;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+	
+		.open-dashboard {
+	  border: none;
+	  padding: 9px 18px;
+	  background: #16a34a;
 	  color: white;
-	  z-index: 4;
-	}
-	
-		/* FULLSCREEN BLOCKER */
-	#blocker {
-	  position: fixed;
-	  inset: 0;
-	  background: rgba(255,255,255,0.6);
-	  z-index: 9999;
-	  display: none;
-	  align-items: center;
-	  justify-content: center;
-	  font-size: 22px;
-	  font-weight: bold;
-	  color: #1e40af;
-	  flex-direction: column;
+	  border-radius: 10px;
+	  cursor: pointer;
+	  font-size: 0.9rem;
+	  display:flex;
+	  gap:6px;
+	  align-items:center;
+	  box-shadow: 0 3px 8px rgba(22,163,74,0.3);
+	  transition: .2s;
 	}
 
-	/* Progress bar */
-	.progress-box {
-	  width: 220px;
-	  height: 10px;
-	  background: #e5e7eb;
-	  border-radius: 6px;
-	  margin-top: 10px;
-	  overflow: hidden;
-	}
-
-	.progress-fill {
-	  height: 100%;
-	  width: 0%;
-	  background: #2563eb;
-	  transition: width 0.25s linear;
-	}
-	
-	.preview-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  margin-top: 6px;
-  display: none;
+.open-dashboard:hover {
+  transform: scale(1.05);
+  background:#138a37;
 }
 
-.upload-col {
-  flex: 1;
-  text-align: center;
+.button-group {
+  display: flex;
+  gap: 10px; /* jarak antar tombol lebih rapat */
+  justify-content: center;
+  margin-top: 10px;
 }
 
-.upload-col input[type="file"] {
-  margin-top: 6px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
 
-	/* === FIXED TOP RIGHT BUTTON AREA === */
-	.header-buttons {
-	  position: fixed;
-	  top: 15px;
-	  right: 20px;
-	  display: flex;
-	  gap: 10px;
-	  z-index: 9999;
-	}
-
-	.btn-nav {
-	  background:#2563eb;
-	  color:white;
-	  border:none;
-	  padding:10px 14px;
-	  border-radius:8px;
-	  font-size:14px;
-	  cursor:pointer;
-	  transition:0.2s;
-	  box-shadow:0 4px 10px rgba(37,99,235,0.3);
-	}
-
-	.btn-nav:hover {
-	  transform: scale(1.06);
-	  background:#1d4ed8;
-	}
-		
-</style>
+  </style>
 </head>
-
 <body>
 
-<!-- 🔧 HEADER BUTTONS (FIXED CORNER BUTTONS) -->
-<div class="header-buttons">
-  <button class="btn-nav" id="dashboardBtn">🚀 Dashboard PM</button>
-  <button class="btn-nav" id="scheduleBtn">📌 Jadwal PM</button>
+<div class="wrapper">
+
+  <h1>📊 Dashboard Monitoring PM</h1>
+  <div class="subtitle">Data otomatis dari Google Apps Script</div>
+
+<div class="button-group">
+  <button class="open-dashboard" onclick="window.location.href='https://yoshuahtgl.github.io/form-ReportPM/'">
+    📌 Detail Report
+  </button>
+
+  <button class="open-dashboard" onclick="window.location.href='https://yoshuahtgl.github.io/CalenderPM/'">
+    📅 Jadwal PM
+  </button>
 </div>
 
-<h2>📋 Preventive Maintenance Summary</h2>
-<div id="loading">⏳ Memuat data...</div>
-
-<div class="table-container">
-  <table id="dataTable">
-    <thead></thead>
-    <tbody></tbody>
-  </table>
+<div style="text-align:center; font-size:12px; margin-top:6px; color:#475569;">
+ ⏱ Terakhir Update: <b id="lastUpdate">-</b>
 </div>
 
+  <div id="errorBox" class="error"></div>
 
-<div id="blocker">
-  <div id="progressText">Uploading... 0%</div>
-  <div class="progress-box">
-    <div class="progress-fill" id="progressFill"></div>
+  <!-- ============ SECTION: STATUS PER ITEM ============ -->
+  <div class="section-title">Status Peralatan</div>
+
+  <div class="cards">
+    <div class="card"><div class="card-title">Lampu Rusak</div><div id="lampuRusak" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Lampu Diperbaiki</div><div id="lampuFix" class="card-value">0</div></div>
+
+    <div class="card"><div class="card-title">Fan Rusak</div><div id="fanRusak" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Fan Diperbaiki</div><div id="fanFix" class="card-value">0</div></div>
+
+    <div class="card"><div class="card-title">Handle Rusak</div><div id="handleRusak" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Handle Diperbaiki</div><div id="handleFix" class="card-value">0</div></div>
   </div>
+
+  <!-- ============ SECTION: OUTSTANDING ============ -->
+  <div class="section-title">Outstanding Task</div>
+
+  <div class="cards">
+    <div class="card"><div class="card-title">Cleaning Panel Outstanding</div><div id="panelOutstanding" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Cleaning Fan Outstanding</div><div id="fanOutstanding" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Cleaning Filter Outstanding</div><div id="filterOutstanding" class="card-value">0</div></div>
+
+    <div class="card"><div class="card-title">Tightening Outstanding</div><div id="tightOutstanding" class="card-value">0</div></div>
+
+    <div class="card"><div class="card-title">Ganti Lampu Outstanding</div><div id="lampuOutstanding" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Ganti Handle Outstanding</div><div id="handleOutstanding" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Ganti Fan Outstanding</div><div id="fanPartOutstanding" class="card-value">0</div></div>
+
+    <div class="card"><div class="card-title">Perbaikan Wiring Outstanding</div><div id="wiringOutstanding" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Cek Alarm PLC Outstanding</div><div id="alarmOutstanding" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Cek Tegangan Outstanding</div><div id="voltOutstanding" class="card-value">0</div></div>
+  </div>
+
+  <!-- ============ SECTION: SUMMARY ============ -->
+  <div class="section-title">Summary</div>
+
+  <div class="cards">
+    <div class="card"><div class="card-title">APM Needed</div><div id="apm" class="card-value">0</div></div>
+    <div class="card"><div class="card-title">Total Data</div><div id="totalData" class="card-value">0</div></div>
+  </div>
+
 </div>
-
-<div id="overlay"></div>
-
-<div id="uploadPopup">
-  <h4 style="text-align:center; margin-bottom:15px;">📸 Upload Foto Before / After</h4>
-
-  <div style="display:block; width:100%;">
-
-    <!-- BEFORE -->
-    <div style="display:flex; align-items:center; margin-bottom:10px;">
-      <label style="width:80px;"><b>Before</b></label>
-      <input type="file" id="beforeInput">
-    </div>
-
-    <!-- AFTER -->
-    <div style="display:flex; align-items:center; margin-bottom:10px;">
-      <label style="width:80px;"><b>After</b></label>
-      <input type="file" id="afterInput">
-    </div>
-
-    <!-- PREVIEW KECIL -->
-    <div style="display:flex; gap:20px; margin:10px 0 20px 0;">
-      <img id="beforePreview" class="preview-img">
-      <img id="afterPreview" class="preview-img">
-    </div>
-
-    <!-- DESKRIPSI -->
-    <div style="margin-top:10px;">
-      <label style="width:80px; display:block;"><b>Deskripsi</b></label>
-      <textarea id="desc" rows="3" placeholder="Deskripsi..." style="width:100%;"></textarea>
-    </div>
-
-  </div>
-
-  <!-- BUTTONS -->
-  <div style="display:flex;gap:10px;margin-top:15px;">
-    <button id="submitUpload"
-            style="flex:1;background:#2563eb;color:white;border:none;border-radius:6px;padding:8px;">
-      Kirim
-    </button>
-
-    <button onclick="closeUpload()"
-            style="flex:1;background:#e5e7eb;border:none;border-radius:6px;">
-      Tutup
-    </button>
-  </div>
-</div>
-
-<!-- Preview Before After -->
-<div id="previewModal">
-  <div class="content"></div>
-  <div style="text-align:center;margin-top:10px;">
-    <button onclick="closePreview()" style="padding:8px 16px;background:#e5e7eb;border:none;border-radius:6px;">Tutup</button>
-  </div>
-</div>
-
-<!-- ⭐ POPUP OUTSTANDING -->
-<div id="outstandingPopup" style="max-width:480px;">
-  <h3 style="margin:0 0 15px 0; text-align:center; font-size:20px;">📌 Detail Outstanding</h3>
-
-  <!-- STATUS -->
-  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-    <label style="width:90px; font-weight:600;">Status</label>
-    <select id="outStatusSelect"
-            style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
-      <option value="">None</option>
-      <option value="Order Barang">Order Barang</option>
-      <option value="In progres">In progres</option>
-      <option value="APM">APM</option>
-    </select>
-  </div>
-
-  <!-- NOTIF -->
-  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-    <label style="width:90px; font-weight:600;">Notif</label>
-    <input id="outNotifInput" type="text" placeholder="Isi notif..."
-           style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
-  </div>
-
-  <!-- DESKRIPSI -->
-  <div style="display:flex; gap:10px; margin-bottom:12px;">
-    <label style="width:90px; font-weight:600;">Deskripsi</label>
-    <textarea id="outDescInput" rows="3" placeholder="Isi deskripsi..."
-              style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;"></textarea>
-  </div>
-
-<div style="text-align:center; margin-top:20px; display:flex; gap:10px; justify-content:center;">
-    <button onclick="saveOutstanding()"
-      style="padding:8px 12px; background:#2563eb; color:white;
-             border:none; border-radius:6px; width:90px;">
-      Simpan
-    </button>
-
-    <button onclick="finishOutstanding()"
-      style="padding:8px 12px; background:#16a34a; color:white;
-             border:none; border-radius:6px; width:130px;">
-      ✔ Tandai Selesai
-    </button>
-
-    <button onclick="closeOutstanding()"
-      style="padding:8px 12px; background:#e5e7eb;
-             border:none; border-radius:6px; width:90px;">
-      Tutup
-    </button>
-</div>
-</div>
-
 
 <script>
-const apiURL="https://script.google.com/macros/s/AKfycbyns4Rtfa7yEuocCA_HzYQBavzUgbhy8hPU1YqzReNCrqIYSbyW35GwQxvhzNLIbTvoPg/exec";
 
-let allData=[],currentCell=null,currentRow=null,currentCol=null;
+const API_URL = "https://script.google.com/macros/s/AKfycbyELz_MrWJKmXAGZp7lKiJLgkGyVmGoUpta8pPtHmCrX2ZbaETTHzgMSEop2u3vwCuTng/exec?action=summary";
 
-function showLoading(x="⏳ Memuat..."){document.getElementById("loading").textContent=x;document.getElementById("loading").style.display="flex";}
-function hideLoading(){document.getElementById("loading").style.display="none";}
-
-async function loadData(){
-  showLoading();
-  const res=await fetch(`${apiURL}?action=get`);
-  allData=await res.json();
-  renderTable(allData);
-  hideLoading();
-}
-
-function renderTable(data){
-  if(!data || !data.length){
-    document.querySelector("#dataTable thead").innerHTML="";
-    document.querySelector("#dataTable tbody").innerHTML="<tr><td colspan='20' style='text-align:center;padding:20px;'>No data</td></tr>";
-    return;
-  }
-
-  const headers=Object.keys(data[0]).slice(1,27);
-  const thead=document.querySelector("#dataTable thead");
-  const tbody=document.querySelector("#dataTable tbody");
-
-  thead.innerHTML="<tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr>";
-
-  tbody.innerHTML = data.map((row,i)=>{
-  const tds = headers.map(h=>{
-    let val = (row[h] || "").toString();
-    const upper = val.toUpperCase();
-
-    const statusColumns = [
-      "CLEANING PANEL","CLEANING FAN","CLEANING FILTER",
-      "TIGHTENING","GANTI LAMPU","GANTI HANDLE","GANTI FAN",
-      "PERBAIKAN WIRING","CEK ALARM PLC","CEK TEGANGAN AC DC"
-    ];
-
-    let display = "";
-
-    // jika bukan kolom status → tampilkan apa adanya
-    if(!statusColumns.includes(h)){
-      display = val;
-    } else {
-      // kolom status pakai dot
-      if(upper.includes("OUTSTANDING")){
-        display = `
-          <span class="status-dot outstanding"></span>
-          <button class="out-btn"
-            onclick="currentCol='${h}'; openOutstanding(${i},'${h}')">❗</button>
-        `;
-      }
-      else if(upper.includes("SELESAI")){
-        display = `<span class="status-dot selesai"></span>`;
-      }
-      else if(upper.includes("OK NO ISSUE")){
-        display = `<span class="status-dot ok"></span>`;
-      }
-      else {
-        display = val;
-      }
-    }
-
-    // tombol preview jika selesai
-    const b = row[`Before_${h}`];
-    const a = row[`After_${h}`];
-    const d = row[`Desk_${h}`];
-
-    if(upper.includes("SELESAI") && b && a && d){
-      display += ` <button class="preview-btn" onclick="showPreview(${i},'${h}')">📷</button>`;
-    }
-
-    return `<td>${display}</td>`;
-  }).join("");
-
-  return `<tr>${tds}</tr>`;
-}).join("");
-}
-
-/* ⭐⭐⭐ FINAL: OUTSTANDING POPUP LOGIC */
-function openOutstanding(idx,col){
-  const r = allData[idx];
-
-  const base = col.replace("_STATUS","");
-
-  const statusCol = base + "_STATUS";
-  const descCol   = base + "_DESKRIPSI";
-  const notifCol  = base + "_NOTIF";
-
-  const popup = document.getElementById("outstandingPopup");
-  popup.dataset.statusCol=statusCol;
-  popup.dataset.descCol=descCol;
-  popup.dataset.notifCol=notifCol;
-  popup.dataset.idx=idx;
-
-  document.getElementById("outStatusSelect").value = r[statusCol] || "";
-  document.getElementById("outDescInput").value    = r[descCol] || "";
-  document.getElementById("outNotifInput").value   = r[notifCol] || "";
-
-  document.getElementById("overlay").style.display="block";
-  popup.style.display="block";
-}
-
-async function saveOutstanding(){
-  const popup=document.getElementById("outstandingPopup");
-
-  const statusCol = popup.dataset.statusCol;
-  const descCol   = popup.dataset.descCol;
-  const notifCol  = popup.dataset.notifCol;
-  const idx       = parseInt(popup.dataset.idx);
-
-
-  const rowNumber = idx + 2;
-
-  const statusVal = document.getElementById("outStatusSelect").value;
-  const descVal   = document.getElementById("outDescInput").value.trim();
-  const notifVal  = document.getElementById("outNotifInput").value.trim();
-
-  showLoading("Saving...");
-
-	await updateStatus(rowNumber, statusCol, statusVal);
-	await updateStatus(rowNumber, descCol, descVal);
-	await updateStatus(rowNumber, notifCol, notifVal);
-
-	await loadData();        // refresh allData
-	await hitungPersentase(idx);  
-
-	hideLoading();
-	closeOutstanding();
-	await loadData(); 
-}
-
-function finishOutstanding() {
-  const popup = document.getElementById("outstandingPopup");
+async function loadData() {
   
-  const idx = parseInt(popup.dataset.idx);
-  currentRow = idx + 2;
+  const err = document.getElementById("errorBox");
+  err.style.display = "none";
 
-  // FIX: simpan kolomnya
-  currentCol = popup.dataset.statusCol.replace("_STATUS", "");
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
 
-  closeOutstanding();
-  openUpload(currentRow);
+    document.getElementById("lampuRusak").textContent = data.lampu_rusak;
+    document.getElementById("lampuFix").textContent = data.lampu_diperbaiki;
+
+    document.getElementById("fanRusak").textContent = data.fan_rusak;
+    document.getElementById("fanFix").textContent = data.fan_diperbaiki;
+
+    document.getElementById("handleRusak").textContent = data.handle_rusak;
+    document.getElementById("handleFix").textContent = data.handle_diperbaiki;
+
+    document.getElementById("panelOutstanding").textContent = data.cleaningPanelOutstanding;
+    document.getElementById("fanOutstanding").textContent = data.cleaningFanOutstanding;
+    document.getElementById("filterOutstanding").textContent = data.cleaningFilterOutstanding;
+
+    document.getElementById("tightOutstanding").textContent = data.tighteningOutstanding;
+
+    document.getElementById("lampuOutstanding").textContent = data.gantiLampuOutstanding;
+    document.getElementById("handleOutstanding").textContent = data.gantiHandleOutstanding;
+    document.getElementById("fanPartOutstanding").textContent = data.gantiFanOutstanding;
+
+    document.getElementById("wiringOutstanding").textContent = data.perbaikanWiringOutstanding;
+    document.getElementById("alarmOutstanding").textContent = data.cekAlarmPlcOutstanding;
+    document.getElementById("voltOutstanding").textContent = data.cekTeganganOutstanding;
+
+    document.getElementById("apm").textContent = data.totaltindakan_APM;
+    document.getElementById("totalData").textContent = data.totalBarisData;
+
+    document.getElementById("lastUpdate").textContent = new Date().toLocaleString("id-ID");
+
+  } catch (e) {
+    err.textContent = "⚠ Error mengambil data: " + e.message;
+    err.style.display = "block";
+  }
 }
 
-function closeOutstanding(){
-  document.getElementById("overlay").style.display="none";
-  document.getElementById("outstandingPopup").style.display="none";
-}
+document.addEventListener("DOMContentLoaded", loadData);
+setInterval(loadData, 30000);
 
-/* === FUNGSI LAIN TIDAK DIUBAH === */
-
-let uploadRow=null;
-function openUpload(r){
-  uploadRow=r;
-  document.getElementById("overlay").style.display="block";
-  document.getElementById("uploadPopup").style.display="block";
-}
-function closeUpload(){
-  document.getElementById("overlay").style.display="none";
-  document.getElementById("uploadPopup").style.display="none";
-}
-
-document.getElementById("beforeInput").addEventListener("change",e=>previewImg(e,"beforePreview"));
-document.getElementById("afterInput").addEventListener("change",e=>previewImg(e,"afterPreview"));
-function previewImg(e,id){
-  const f=e.target.files[0];
-  const img=document.getElementById(id);
-  if(f){img.src=URL.createObjectURL(f);img.style.display="block";}
-}
-
-async function uploadFileToDrive(file,name){
-  const base64=await new Promise(r=>{let fr=new FileReader();fr.onload=e=>r(e.target.result.split(",")[1]);fr.readAsDataURL(file);});
-  const res=await fetch(apiURL,{method:"POST",body:new URLSearchParams({action:"uploadImage",file:base64,mimeType:file.type,filename:name})});
-  return res.text();
-}
-
-
-document.getElementById("submitUpload").addEventListener("click", async () => {
-  const desc = document.getElementById("desc").value.trim();
-  const b = document.getElementById("beforeInput").files[0];
-  const a = document.getElementById("afterInput").files[0];
-  if (!b || !a) return alert("⚠️ Upload foto sebelum & sesudah!");
-
-  showProgress();  // ⬅ aktifkan overlay + progress
-
-  const row = allData[uploadRow - 2];
-  const plant = (row.PLANT || "PLANT").replace(/\s+/g, "_");
-  const cat = currentCol.replace(/\s+/g, "_");
-  const d = new Date().toISOString().split("T")[0];
-  const prefix = `${d}_${plant}_${cat}`;
-
-  // Simulasi progress 1 → 40
-  await simulateProgress(1, 40, 600);
-
-  // Upload paralel
-  const [bLink, aLink] = await Promise.all([
-    uploadFileToDrive(b, prefix + "_Before"),
-    uploadFileToDrive(a, prefix + "_After")
-  ]);
-
-  await simulateProgress(40, 60, 300);
-
-  // Update status
-  await Promise.all([
-    updateStatus(uploadRow, `Before_${currentCol}`, bLink),
-    updateStatus(uploadRow, `After_${currentCol}`, aLink),
-    updateStatus(uploadRow, `Desk_${currentCol}`, desc),
-    updateStatus(uploadRow, currentCol, "SELESAI")
-  ]);
-
-  await simulateProgress(60, 80, 400);
-
-  // Refresh & hitung persentase
-  await loadData();
-  await hitungPersentase(uploadRow - 2);
-
-  await simulateProgress(80, 100, 400);
-
-  hideProgress();
-  closeUpload();
-});
-
-function showProgress() {
-  const b = document.getElementById("blocker");
-  b.style.display = "flex";
-  updateProgress(1); 
-}
-
-function hideProgress() {
-  document.getElementById("blocker").style.display = "none";
-}
-
-function updateProgress(val) {
-  document.getElementById("progressText").innerText = `Uploading... ${val}%`;
-  document.getElementById("progressFill").style.width = val + "%";
-}
-
-// Simulate progress gradually
-function simulateProgress(start, end, time) {
-  return new Promise(resolve => {
-    let val = start;
-    let step = (end - start) / (time / 80);
-
-    let interval = setInterval(() => {
-      val += step;
-      if (val >= end) {
-        val = end;
-        clearInterval(interval);
-        resolve();
-      }
-      updateProgress(Math.round(val));
-    }, 80);
-  });
-}
-
-async function updateStatus(row,col,val){
-  const r=await fetch(apiURL,{method:"POST",body:new URLSearchParams({action:"update",row,col,value:val})});
-  return r.text();
-}
-
-/* =====================================================
-   HITUNG PERSENTASE OUTSTANDING (kolom O–W = 9 kolom)
-   Hasil ditulis ke kolom X (PERSENTASE)
-   ===================================================== */
-async function hitungPersentase(rowIndex) {
-  const row = allData[rowIndex]; // data satu baris
-
-  // Kolom status O–W = index 14–22
-  const statusKeys = [
-    "CLEANING PANEL", "CLEANING FAN", "CLEANING FILTER",
-    "TIGHTENING", "GANTI LAMPU", "GANTI HANDLE", "GANTI FAN",
-    "PERBAIKAN WIRING", "CEK ALARM PLC", "CEK TEGANGAN AC DC"
-  ];
-
-  let total = statusKeys.length; // selalu 9 kolom
-  let outstanding = 0;
-
-  statusKeys.forEach(k => {
-    let val = (row[k] || "").toString().toUpperCase();
-    if (val.includes("OUTSTANDING")) outstanding++;
-  });
-
-  // hitung persen
-  let selesai = total - outstanding;
-  let persen = Math.round((selesai / total) * 100);
-
-  // update ke kolom PERSENTASE (header = "PERSENTASE")
-  await updateStatus(rowIndex + 2, "PERSENTASE", persen + "%");
-
-  console.log("Persentase updated:", persen + "%");
-}
-
-function showPreview(i,h){
-  const r=allData[i];
-  const b=r[`Before_${h}`],a=r[`After_${h}`],d=r[`Desk_${h}`];
-  const modal=document.getElementById("previewModal");
-
-  modal.querySelector(".content").innerHTML=`
-    <h3>📷 ${h}</h3>
-    <p><b>Deskripsi:</b> ${d}</p>
-    <div style="display:flex;gap:15px;justify-content:center;">
-      <div><b>Before:</b><br><a href="${b}" target="_blank"><img src="${b}" width="150"></a></div>
-      <div><b>After:</b><br><a href="${a}" target="_blank"><img src="${a}" width="150"></a></div>
-    </div>`;
-
-  document.getElementById("overlay").style.display="block";
-  modal.style.display="block";
-}
-
-function closePreview(){
-  document.getElementById("overlay").style.display="none";
-  document.getElementById("previewModal").style.display="none";
-}
-
-document.getElementById("overlay").addEventListener("click",()=>{
-  closeUpload(); closePreview(); closeOutstanding();
-});
-
-document.getElementById("dashboardBtn").onclick = () =>
-  window.location.href = "https://yoshuahtgl.github.io/dasboard_PM/";
-
-document.getElementById("scheduleBtn").onclick = () =>
-  window.location.href = "https://yoshuahtgl.github.io/CalenderPM/";  // ganti link nanti
-
-loadData();
 </script>
 
 </body>
-</html>
 </html>
