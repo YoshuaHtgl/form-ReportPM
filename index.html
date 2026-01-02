@@ -234,71 +234,46 @@
   margin-right: auto;
 }
 
-.top-btns {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 15px;
-}
+	/* === FIXED TOP RIGHT BUTTON AREA === */
+	.header-buttons {
+	  position: fixed;
+	  top: 15px;
+	  right: 20px;
+	  display: flex;
+	  gap: 10px;
+	  z-index: 9999;
+	}
 
-.btn-green-top {
-  background:#16a34a;
-  color:white;
-  border:none;
-  padding:8px 16px;
-  border-radius:6px;
-  font-weight:bold;
-  cursor:pointer;
-  font-size:14px;
-  transition:0.2s;
-}
+	.btn-nav {
+	  background:#2563eb;
+	  color:white;
+	  border:none;
+	  padding:10px 14px;
+	  border-radius:8px;
+	  font-size:14px;
+	  cursor:pointer;
+	  transition:0.2s;
+	  box-shadow:0 4px 10px rgba(37,99,235,0.3);
+	}
 
-.btn-green-top:hover {
-  filter: brightness(0.9);
-}
-
-.header-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 6px 5px;
-}
-
-.header-btn-group {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-green-top {
-  background:#16a34a;
-  color:white;
-  border:none;
-  padding:6px 14px;
-  border-radius:6px;
-  font-weight:bold;
-  cursor:pointer;
-  font-size:14px;
-  transition:0.2s;
-}
-
-.btn-green-top:hover {
-  filter: brightness(0.9);
-}
-	
+	.btn-nav:hover {
+	  transform: scale(1.06);
+	  background:#1d4ed8;
+	}
+		
 </style>
 </head>
 
 <body>
-<div class="header-line">
-  <h2 style="margin:0;">📋 Preventive Maintenance Summary</h2>
-  
-  <div class="header-btn-group">
-    <button class="btn-green-top" onclick="goDashboard()">📊 Dashboard</button>
-    <button class="btn-green-top" onclick="goPM()">📌 Calendar PM</button>
-  </div>
+
+<!-- 🔧 HEADER BUTTONS (FIXED CORNER BUTTONS) -->
+<div class="header-buttons">
+  <button class="btn-nav" id="dashboardBtn">🚀 Dashboard PM</button>
+  <button class="btn-nav" id="scheduleBtn">📌 Jadwal PM PLC</button>
+  <button class="btn-nav" id="pmbattery">📌 Padwal PM Battery</button>
 </div>
 
+<h2>📋 Preventive Maintenance Summary</h2>
 <div id="loading">⏳ Memuat data...</div>
 
 <div class="table-container">
@@ -744,13 +719,16 @@ document.getElementById("overlay").addEventListener("click",()=>{
   closeUpload(); closePreview(); closeOutstanding();
 });
 
-function goDashboard(){
+document.getElementById("dashboardBtn").onclick = () =>
   window.location.href = "https://yoshuahtgl.github.io/dasboard_PM/";
-}
 
-function goPM(){
-  window.location.href = "https://yoshuahtgl.github.io/CalenderPM/";
-}
+document.getElementById("scheduleBtn").onclick = () =>
+  window.location.href = "https://yoshuahtgl.github.io/CalenderPM/";  // ganti link nanti
+  
+document.getElementById("jadwal PM Battery").onclick = () =>
+  window.location.href = "https://yoshuahtgl.github.io/CalenderPMBattery/";  // ganti link nanti
+
+
 
 loadData();
 </script>
